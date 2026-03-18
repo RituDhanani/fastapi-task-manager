@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    new_user = create_user(db, user.name, user.email, user.password)
+    new_user = create_user(db, user.name, user.email, user.password, user.role)
     return {"message": "User created", "user_id": new_user.id}
 
 

@@ -2,13 +2,14 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.services.auth_services import hash_password, verify_password
 
-def create_user(db: Session, name: str, email: str, password: str):
+def create_user(db: Session, name: str, email: str, password: str, role: str = "user"):
     hashed_password = hash_password(password)
 
     user = User(
         name=name,
         email=email,
-        password=hashed_password
+        password=hashed_password,
+        role=role
     )
     db.add(user)
     db.commit()
