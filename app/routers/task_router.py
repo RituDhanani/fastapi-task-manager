@@ -6,6 +6,7 @@ from app.schemas.task_schema import TaskCreate
 from app.services.task_service import create_task, get_tasks, update_task, delete_task
 from app.services.deps import get_current_user
 from app.models.user import User
+from app.tasks.task_logs import create_activity_log
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -16,7 +17,15 @@ def create(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return create_task(db, task.title, task.description, current_user.id)
+    new_task = create_task(db, task.title, task.description, current_user.id)
+
+    create_activity_log.delay(
+        "created",
+        new_task.title,
+        current_user.name
+    )
+
+    return new_task
 
 
 @router.get("/list")
@@ -48,6 +57,12 @@ def update(
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found or not authorized")
 
+    create_activity_log.delay(
+        "updated",
+        task.title,
+        current_user.name
+    )
+
     return updated
 
 
@@ -67,5 +82,11 @@ def delete(
 
     db.delete(task)
     db.commit()
+
+    create_activity_log.delay(
+        "deleted",
+        task.title,
+        current_user.name
+    )
 
     return {"message": "Task deleted"}
